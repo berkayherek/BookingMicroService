@@ -3,8 +3,8 @@
 A distributed, service-oriented web application for hotel reservations featuring dynamic pricing (ML), real-time inventory management, and asynchronous notifications.
 
 ### 📺 Project Demo
-**[CLICK HERE TO WATCH THE VIDEO PRESENTATION (5 Min)]**  
-*(e.g., https://youtu.be/your-video-link)*
+[**[CLICK HERE TO WATCH THE VIDEO PRESENTATION (5 Min)]**  
+(https://drive.google.com/file/d/1buy6xan6FFE-lvDS6kWmDea3fJx3Wg_e/view?usp=sharing)
 
 ---
 
@@ -39,45 +39,40 @@ This project follows a **Microservices Architecture** pattern to ensure scalabil
 4.  **ML Service (Port 5004):** A Python-based service that calculates dynamic pricing based on seasonality (Summer vs. Winter) and room types.
 
 ---
-Assumptions & Implementation Details
-Transactional Inventory:
-We do not use a simple global counter. Instead, availability is calculated dynamically by checking for date overlaps against the total room count for a specific hotel.
-Seasonality (ML):
-The Python service assumes "High Season" is June-September (1.5x Multiplier) and "Low Season" is Dec-Feb (0.8x Multiplier).
-Low Capacity Alert:
-For demonstration purposes, the Notification Service randomly sets a hotel's capacity percentage upon booking to trigger the "Low Stock" alert in the logs immediately.
-Map Feature:
-We use Google Maps Embed API to display the exactLocation string stored in the database.
-⚠️ Issues Encountered & Solutions
-Date Overlap Logic:
-Issue: Preventing double bookings without locking the room for the entire year.
-Solution: Implemented a Firestore Transaction that queries only bookings overlapping the requested Start and End dates before confirming.
-Microservice Communication:
-Issue: Node.js needed to talk to Python for pricing.
-Solution: Used synchronous HTTP (Axios) for pricing (since the user needs the price immediately) but asynchronous RabbitMQ for notifications (which can happen in the background).
-CORS & Gateway:
-Issue: Frontend requests were blocked when hitting services directly.
-Solution: Configured http-proxy-middleware in the Gateway so the frontend only talks to port 5000.
-🛠 Local Installation Guide
-Clone the Repository
-code
-Bash
-git clone https://github.com/berkayherek/BookingMicroService.git
-cd hotel-microservices
-Setup Secrets
-Place your serviceAccountKey.json (Firebase Admin Key) into:
-backend/gateway/
-backend/hotel-service/
-backend/notification-service/
-Run with Docker Compose
-code
-Bash
-docker-compose up --build
-Access
-Frontend: http://localhost:5173
-Gateway: http://localhost:5000
-code
-Code
+**Assumptions & Implementation Details**
+**Transactional Inventory:
+We do not use a simple global counter. Instead, availability is calculated dynamically by checking for date overlaps against the total room count for a specific hotel.**
+**Seasonality (ML):
+The Python service assumes "High Season" is June-September (1.5x Multiplier) and "Low Season" is Dec-Feb (0.8x Multiplier).**
+**Low Capacity Alert:
+For demonstration purposes, the Notification Service randomly sets a hotel's capacity percentage upon booking to trigger the "Low Stock" alert in the logs immediately.**
+**Map Feature:
+We use Google Maps Embed API to display the exactLocation string stored in the database.**
+**⚠️ Issues Encountered & Solutions**
+**Date Overlap Logic:**
+**Issue: Preventing double bookings without locking the room for the entire year.**
+**Solution: Implemented a Firestore Transaction that queries only bookings overlapping the requested Start and End dates before confirming.**
+**Microservice Communication:**
+**Issue: Node.js needed to talk to Python for pricing.**
+**Solution: Used synchronous HTTP (Axios) for pricing (since the user needs the price immediately) but asynchronous RabbitMQ for notifications (which can happen in the background).**
+**CORS & Gateway:**
+**Issue: Frontend requests were blocked when hitting services directly.**
+**Solution: Configured http-proxy-middleware in the Gateway so the frontend only talks to port 5000.**
+**🛠 Local Installation Guide**
+**Clone the Repository**
+*git clone https://github.com/berkayherek/BookingMicroService.git*
+*cd hotel-microservices*
+*Setup Secrets*
+*Place your serviceAccountKey.json (Firebase Admin Key) into:*
+*backend/gateway/*
+*backend/hotel-service/*
+*backend/notification-service/*
+*Run with Docker Compose*
+*docker-compose up --build*
+*Access*
+*Frontend: http://localhost:5173*
+*Gateway: http://localhost:5000*
+
 ***
 
 ## 📊 Data Models (ER Diagram)
