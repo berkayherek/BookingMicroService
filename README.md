@@ -9,9 +9,11 @@ A distributed, service-oriented web application for hotel reservations featuring
 ---
 
 ## 🚀 Deployed Application Links
-*   **User Frontend:** [https://your-frontend-app.onrender.com](https://your-frontend-app.onrender.com)
-*   **Admin Portal:** [https://your-frontend-app.onrender.com/admin](https://your-frontend-app.onrender.com) *(Accessible via Admin Login)*
-*   **API Gateway:** [https://your-gateway-app.onrender.com](https://your-gateway-app.onrender.com)
+*   **User Frontend:** https://userfrontend-4gh0.onrender.com
+*   **Admin Portal:**  https://adminfrontend-8wob.onrender.com *(Accessible via Admin Login)*
+*   **API Gateway:** https://gateaway-zbw5.onrender.com
+*   **Hotel Service** https://hotelservice-ojiv.onrender.com
+*   **Notification center** https://notification-kbml.onrender.com
 
 ---
 
