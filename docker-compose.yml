@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hotel-network
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - hotel-network
+  gateway:
+    build: ./backend/gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - HOTEL_SERVICE_URL=http://hotel-service:5001
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5002
+    depends_on:
+      - hotel-service
+      - notification-service
+    networks:
+      - hotel-network
+
+  hotel-service:
+    build: ./backend/hotel-service
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hotel-network
+
+  notification-service:
+    build: ./backend/notification-service
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hotel-network
+  ml-service:
+    build: ./backend/ml-service
+    ports:
+      - "5004:5004"
+    networks:
+      - hotel-network
+      
+networks:
+  hotel-network:
+    driver: bridge
