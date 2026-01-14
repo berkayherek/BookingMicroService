@@ -5,15 +5,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5174, // Matches your current port
+    // This allows you to run on a specific port locally if you want
+    // But Render ignores this for Static Sites
+    port: 5173, 
+    
+    // PROXY: Only works locally (npm run dev)
+    // We point this to your Gateway (Port 5000)
     proxy: {
-      // Catch any request starting with "/api"
       '/api': {
-        target: 'http://localhost:5001', // Forward to Backend Docker Container
+        target: 'http://localhost:5000', // Always target Gateway locally
         changeOrigin: true,
         secure: false,
-        // CRITICAL: Remove "/api" before sending to backend
-        // So "/api/admin/hotels" becomes "/admin/hotels"
+        // Removes '/api' so /api/hotel/search -> /hotel/search
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     }

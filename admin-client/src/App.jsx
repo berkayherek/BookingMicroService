@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Login from './Login';
 
-// Setup API
-// If you are local, use localhost:5001. If cloud, use env var.
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:5001';
-const api = axios.create({ baseURL: GATEWAY_URL });
+// --- API SETUP (CLOUD READY) ---
+// 1. Get the Gateway URL from Render's Environment Variable
+// 2. Fallback to http://localhost:5000 (The local Gateway port)
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:5000';
 
-// If using gateway locally, uncomment this line instead:
-// const api = axios.create({ baseURL: '/api' }); 
+// 3. Create the Axios instance
+// We append '/hotel' because the Gateway routes requests starting with '/hotel' to the Hotel Service
+const api = axios.create({ 
+    baseURL: `${GATEWAY_URL}/hotel` 
+});
+// -------------------------------
 
 function App() {
   const [token, setToken] = useState(null);
@@ -35,7 +39,10 @@ function App() {
 
   useEffect(() => {
     if (token) {
+        // Set the Token and User ID for the Gateway Auth Middleware
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        // Admin user simulation for headers
+        api.defaults.headers.common['x-user-id'] = 'admin_user'; 
         fetchData();
     }
   }, [token]);
@@ -66,7 +73,7 @@ function App() {
       setBookings([]); // Clear old data
       setShowScheduleModal(true);
       try {
-          // Call the new backend endpoint
+          // Call the backend endpoint
           const res = await api.get(`/admin/bookings?hotelId=${hotel.id}`);
           setBookings(res.data);
       } catch (e) {

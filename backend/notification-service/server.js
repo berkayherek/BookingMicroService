@@ -2,25 +2,33 @@ const express = require('express');
 const amqp = require('amqplib');
 const cron = require('node-cron');
 const admin = require('firebase-admin');
-const app = express();
+require('dotenv').config();
 
+const app = express();
 const PORT = process.env.PORT || 5002;
-const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
+const RABBITMQ_URL = process.env.RABBITMQ_URL;
 const QUEUE_NAME = 'booking_queue';
 
 // --- CLOUD DATABASE SETUP ---
-// Make sure 'serviceAccountKey.json' is in backend/notification-service/
+let db = null;
 try {
-    const serviceAccount = require('./serviceAccountKey.json');
+    let serviceAccount;
+    if (process.env.FIREBASE_KEY_BASE64) {
+        const buffer = Buffer.from(process.env.FIREBASE_KEY_BASE64, 'base64');
+        serviceAccount = JSON.parse(buffer.toString('utf-8'));
+    } else {
+        serviceAccount = require('./serviceAccountKey.json');
+    }
     admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    db = admin.firestore();
     console.log("🔥 Firebase Cloud DB Connected");
 } catch (e) {
-    console.error("Firebase Init Failed (Check serviceAccountKey.json):", e.message);
+    console.error("Firebase Init Failed:", e.message);
 }
-const db = admin.firestore();
 
 // --- RABBITMQ CONSUMER ---
 async function startConsumer() {
+    if (!RABBITMQ_URL) return console.log("⚠️ No RabbitMQ URL. Consumer disabled.");
     try {
         const connection = await amqp.connect(RABBITMQ_URL);
         const channel = await connection.createChannel();
@@ -33,29 +41,15 @@ async function startConsumer() {
                 const booking = JSON.parse(msg.content.toString());
                 console.log(`[PROCESSING] Received booking for Hotel ${booking.hotelId}`);
 
-                try {
-                    // 1. WRITE TO CLOUD DB
-                    await db.collection('bookings').add({
-                        ...booking,
-                        status: 'Confirmed',
-                        createdAt: new Date().toISOString()
-                    });
-                    console.log(`✅ Saved booking to Firestore!`);
-
-                    // 2. CREATE/UPDATE HOTEL CAPACITY IN CLOUD DB (For Scheduler)
-                    // We randomly assign a low capacity to trigger the alert for demo
+                if (db) {
+                    // Update Capacity for Scheduler Check (Randomly set low to simulate usage)
                     await db.collection('hotels').doc(String(booking.hotelId)).set({
                         id: booking.hotelId,
                         capacityPercentage: Math.floor(Math.random() * 30) 
                     }, { merge: true });
-
-                    // 3. NOTIFY USER
-                    console.log(`[NOTIFICATION SERVICE] 📧 Email sent to User ${booking.userId}`);
                     
-                } catch (err) {
-                    console.error("❌ Database Write Failed:", err.message);
+                    console.log(`[NOTIFICATION] 📧 Email sent to User ${booking.userId}`);
                 }
-
                 channel.ack(msg);
             }
         });
@@ -63,20 +57,19 @@ async function startConsumer() {
 }
 startConsumer();
 
-// --- SCHEDULER (Nightly Task) ---
+// --- SCHEDULER ---
 cron.schedule('* * * * *', async () => {
+    if (!db) return;
     console.log('--- 🌙 Nightly Cloud Capacity Check ---');
     try {
         const snapshot = await db.collection('hotels').get();
-        if (snapshot.empty) return console.log("No hotel data in Cloud DB yet.");
-
         snapshot.forEach(doc => {
             const hotel = doc.data();
             if (hotel.capacityPercentage < 20) {
                 console.warn(`[🚨 ALERT] Hotel ${hotel.id} is running low on capacity! (${hotel.capacityPercentage}%)`);
             }
         });
-    } catch (error) { console.error("Scheduler DB Error:", error.message); }
+    } catch (error) { console.error("Scheduler Error:", error.message); }
 });
 
 app.listen(PORT, () => console.log(`Notification Service running on port ${PORT}`));
