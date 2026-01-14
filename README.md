@@ -62,7 +62,7 @@ Solution: Configured http-proxy-middleware in the Gateway so the frontend only t
 Clone the Repository
 code
 Bash
-git clone https://github.com/your-username/hotel-microservices.git
+git clone https://github.com/berkayherek/BookingMicroService.git
 cd hotel-microservices
 Setup Secrets
 Place your serviceAccountKey.json (Firebase Admin Key) into:
