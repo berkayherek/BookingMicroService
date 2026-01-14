@@ -78,15 +78,6 @@ code
 Code
 ***
 
-### 📹 Don't forget the video!
-The exam requirement specifically asks for a **max 5-minute video**.
-1.  **Record your screen** (Use OBS or Zoom).
-2.  Show the **Admin Panel** (Add a room).
-3.  Show the **User Panel** (Search, Filter, Map, Book).
-4.  Show the **Logs** (Show the "Booking Confirmed" and "Low Capacity Alert" in the terminal).
-5.  Upload to YouTube (Unlisted) or Google Drive.
-6.  **Paste the link in the README above.**
-
 ## 📊 Data Models (ER Diagram)
 
 Although Firestore is a NoSQL document database, the logical relationships between entities are defined as follows:
