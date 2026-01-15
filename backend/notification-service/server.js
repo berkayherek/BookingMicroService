@@ -2,6 +2,7 @@ const express = require('express');
 const amqp = require('amqplib');
 const cron = require('node-cron');
 const admin = require('firebase-admin');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -13,12 +14,16 @@ const QUEUE_NAME = 'booking_queue';
 let db = null;
 try {
     let serviceAccount;
-    if (process.env.FIREBASE_KEY_BASE64) {
-        const buffer = Buffer.from(process.env.FIREBASE_KEY_BASE64, 'base64');
-        serviceAccount = JSON.parse(buffer.toString('utf-8'));
+    const secretFilePath = '/etc/secrets/serviceAccountKey.json';
+
+    if (fs.existsSync(secretFilePath)) {
+        console.log("🔹 Notification: Loading Key from Secret File...");
+        serviceAccount = require(secretFilePath);
     } else {
+        console.log("🔹 Notification: Loading Key from Local File...");
         serviceAccount = require('./serviceAccountKey.json');
     }
+    
     admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     db = admin.firestore();
     console.log("🔥 Firebase Cloud DB Connected");
@@ -40,14 +45,11 @@ async function startConsumer() {
             if (msg !== null) {
                 const booking = JSON.parse(msg.content.toString());
                 console.log(`[PROCESSING] Received booking for Hotel ${booking.hotelId}`);
-
                 if (db) {
-                    // Update Capacity for Scheduler Check (Randomly set low to simulate usage)
                     await db.collection('hotels').doc(String(booking.hotelId)).set({
                         id: booking.hotelId,
                         capacityPercentage: Math.floor(Math.random() * 30) 
                     }, { merge: true });
-                    
                     console.log(`[NOTIFICATION] 📧 Email sent to User ${booking.userId}`);
                 }
                 channel.ack(msg);
